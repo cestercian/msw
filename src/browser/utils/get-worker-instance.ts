@@ -38,7 +38,14 @@ export const getWorkerInstance = async (
   if (existingRegistration) {
     // Schedule the worker update in the background.
     // Update ensures the existing worker is up-to-date.
-    existingRegistration.update()
+    // The update is best-effort. It rejects when the registration is
+    // already going away (Firefox throws InvalidStateError if the next
+    // page starts while the worker unregisters itself) and when a
+    // restart cannot re-fetch the script. The current worker stays in
+    // use either way, so observe the rejection and do not report it.
+    existingRegistration.update().catch(() => {
+      // Intentionally empty. See the comment above.
+    })
 
     // Return the worker reference immediately.
     return [
